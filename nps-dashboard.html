@@ -1,0 +1,1635 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NPS Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f6f7fb;
+  --surface: #ffffff;
+  --surface2: #f8fafc;
+  --border: #e8ecf0;
+  --border-light: #f1f4f7;
+  --text: #0d1117;
+  --text-2: #4b5563;
+  --text-3: #9ca3af;
+  --indigo: #6366f1;
+  --indigo-dark: #4f46e5;
+  --indigo-light: #e0e7ff;
+  --green: #10b981;
+  --amber: #f59e0b;
+  --red: #ef4444;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
+  --shadow-md: 0 4px 16px rgba(0,0,0,.08), 0 2px 6px rgba(0,0,0,.04);
+  --shadow-lg: 0 20px 40px rgba(0,0,0,.12), 0 8px 16px rgba(0,0,0,.06);
+  --shadow-xl: 0 32px 64px rgba(0,0,0,.18);
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Inter', system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 14px;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── HEADER ── */
+header {
+  background: rgba(255,255,255,0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  padding: 0 36px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border);
+  position: sticky; top: 0; z-index: 200;
+  gap: 16px;
+}
+.logo {
+  display: flex; align-items: center; gap: 10px;
+  font-size: 1rem; font-weight: 800; color: var(--text); letter-spacing: -0.5px; white-space: nowrap;
+}
+.logo-icon {
+  width: 30px; height: 30px; border-radius: 8px;
+  background: linear-gradient(135deg, var(--indigo) 0%, #8b5cf6 100%);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 15px; flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(99,102,241,.35);
+}
+.header-right { display: flex; align-items: center; gap: 10px; }
+.period-badge {
+  background: var(--indigo-light); color: var(--indigo-dark);
+  font-size: 0.72rem; font-weight: 600; padding: 5px 12px;
+  border-radius: 20px; border: 1px solid #c7d2fe; letter-spacing: .2px;
+}
+
+/* ── FILTERS / NAV ── */
+.filters {
+  background: rgba(255,255,255,0.9);
+  backdrop-filter: blur(8px);
+  padding: 0 36px;
+  height: 52px;
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  border-bottom: 1px solid var(--border);
+  flex-wrap: nowrap;
+  overflow-x: auto;
+}
+.filter-group { display: flex; align-items: center; gap: 7px; flex-shrink: 0; }
+.filter-group label { font-size: 0.72rem; color: var(--text-3); font-weight: 600; white-space: nowrap; text-transform: uppercase; letter-spacing: .4px; }
+.filters select {
+  padding: 5px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 0.8rem; font-family: inherit;
+  color: var(--text); background: var(--surface);
+  cursor: pointer; outline: none;
+  transition: border-color .15s, box-shadow .15s;
+}
+.filters select:focus { border-color: var(--indigo); box-shadow: 0 0 0 3px rgba(99,102,241,.12); }
+.filter-divider { width: 1px; height: 22px; background: var(--border); flex-shrink: 0; }
+.nav-tabs { display: flex; gap: 2px; margin-left: auto; flex-shrink: 0; background: var(--surface2); border-radius: 10px; padding: 3px; border: 1px solid var(--border); }
+.nav-tab {
+  padding: 5px 14px; border-radius: 7px; font-size: 0.75rem; font-weight: 600;
+  cursor: pointer; border: none; background: transparent; color: var(--text-2);
+  transition: all .18s; white-space: nowrap; font-family: inherit;
+}
+.nav-tab.active { background: var(--surface); color: var(--indigo-dark); box-shadow: var(--shadow-sm); }
+.nav-tab:hover:not(.active) { color: var(--text); background: rgba(0,0,0,.03); }
+
+/* ── MAIN ── */
+.main { padding: 28px 36px; max-width: 1500px; margin: 0 auto; }
+.view { display: none; }
+.view.active { display: block; }
+
+/* ── KPI ROW ── */
+.kpi-row { display: grid; grid-template-columns: 1.4fr 1fr 1fr 1fr; gap: 14px; margin-bottom: 18px; }
+.kpi-card {
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+  transition: box-shadow .2s, transform .15s, border-color .2s;
+  position: relative;
+  overflow: hidden;
+}
+.kpi-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  opacity: 0;
+  transition: opacity .2s;
+  background: linear-gradient(135deg, rgba(99,102,241,.04), rgba(139,92,246,.04));
+}
+.kpi-card:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); border-color: #d1d5db; }
+.kpi-card:hover::after { opacity: 1; }
+
+.kpi-main {
+  background: linear-gradient(145deg, #4f46e5 0%, #6d28d9 60%, #7c3aed 100%);
+  border-color: transparent;
+  color: #fff;
+}
+.kpi-main::before {
+  content: '';
+  position: absolute;
+  top: -30px; right: -30px;
+  width: 120px; height: 120px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.07);
+}
+.kpi-main::after { background: none; }
+.kpi-main:hover { box-shadow: 0 8px 24px rgba(99,102,241,.4); border-color: transparent; }
+
+.kpi-label { font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: .6px; color: var(--text-3); margin-bottom: 6px; }
+.kpi-main .kpi-label { color: rgba(255,255,255,.7); }
+.kpi-value { font-size: 2.6rem; font-weight: 900; line-height: 1; letter-spacing: -1.5px; color: var(--text); }
+.kpi-main .kpi-value { color: #fff; }
+.kpi-sub { font-size: 0.72rem; color: var(--text-3); margin-top: 4px; }
+.kpi-main .kpi-sub { color: rgba(255,255,255,.6); }
+.kpi-change { display: inline-flex; align-items: center; gap: 4px; font-size: 0.7rem; font-weight: 700; margin-top: 12px; padding: 4px 10px; border-radius: 20px; }
+.up   { background: #d1fae5; color: #065f46; }
+.down { background: #fee2e2; color: #991b1b; }
+.flat { background: var(--surface2); color: var(--text-3); }
+.kpi-main .up { background: rgba(255,255,255,.18); color: #fff; }
+.prom-val { color: #059669; font-size: 2.2rem; font-weight: 900; letter-spacing: -1px; }
+.pass-val { color: #d97706; font-size: 2.2rem; font-weight: 900; letter-spacing: -1px; }
+.det-val  { color: #dc2626; font-size: 2.2rem; font-weight: 900; letter-spacing: -1px; }
+.bar-mini { height: 4px; border-radius: 4px; background: var(--border-light); overflow: hidden; margin-top: 14px; }
+.bar-fill { height: 100%; border-radius: 4px; transition: width .6s cubic-bezier(.4,0,.2,1); }
+
+/* ── CARDS ── */
+.charts-row { display: grid; grid-template-columns: 2fr 1fr; gap: 14px; margin-bottom: 18px; }
+.card {
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+}
+.card-title { font-size: 0.88rem; font-weight: 700; color: var(--text); margin-bottom: 3px; letter-spacing: -.2px; }
+.card-sub { font-size: 0.72rem; color: var(--text-3); margin-bottom: 20px; }
+
+/* ── SEGMENTS ── */
+.seg-row {
+  display: flex; align-items: center; gap: 14px; padding: 12px 8px;
+  border-radius: var(--radius-md); cursor: pointer;
+  transition: background .12s; border-bottom: 1px solid var(--border-light);
+}
+.seg-row:last-child { border-bottom: none; }
+.seg-row:hover { background: #f8f9ff; }
+.seg-name { font-size: 0.82rem; font-weight: 600; min-width: 130px; color: var(--text); }
+.seg-score { font-size: 0.95rem; font-weight: 800; min-width: 44px; text-align: right; letter-spacing: -.3px; }
+.score-g { color: #059669; } .score-m { color: var(--indigo-dark); } .score-w { color: #d97706; } .score-b { color: #dc2626; }
+.seg-bar-bg { flex: 1; height: 6px; background: var(--border-light); border-radius: 6px; overflow: hidden; }
+.seg-bar-fill { height: 100%; border-radius: 6px; transition: width .5s cubic-bezier(.4,0,.2,1); }
+.badges { display: flex; gap: 5px; }
+.badge { font-size: 0.67rem; font-weight: 700; padding: 3px 8px; border-radius: 20px; letter-spacing: .1px; }
+.bp { background: #d1fae5; color: #065f46; }
+.bn { background: #fef3c7; color: #92400e; }
+.bd { background: #fee2e2; color: #991b1b; }
+.seg-resp { font-size: 0.71rem; color: var(--text-3); min-width: 68px; text-align: right; }
+
+/* ── TIPS ── */
+.tips-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 18px; }
+.tip-card {
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+  display: flex; gap: 14px; align-items: flex-start;
+  border-top: 3px solid var(--indigo);
+  transition: box-shadow .2s, transform .15s;
+}
+.tip-card:hover { box-shadow: var(--shadow-md); transform: translateY(-1px); }
+.tip-card.warn  { border-top-color: var(--amber); }
+.tip-card.good  { border-top-color: var(--green); }
+.tip-card.alert { border-top-color: var(--red); }
+.tip-icon { font-size: 1.4rem; flex-shrink: 0; margin-top: 1px; }
+.tip-title { font-size: 0.84rem; font-weight: 700; margin-bottom: 5px; color: var(--text); }
+.tip-text  { font-size: 0.77rem; color: var(--text-2); line-height: 1.6; }
+.tip-action {
+  display: inline-flex; align-items: center; gap: 4px;
+  margin-top: 10px; font-size: 0.72rem; font-weight: 700;
+  color: var(--indigo-dark); cursor: pointer;
+  transition: gap .15s;
+}
+.tip-action:hover { gap: 7px; }
+
+/* ── METHOD CARDS ── */
+.method-row { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; margin-bottom: 0; }
+.method-card {
+  background: var(--surface); border-radius: var(--radius-lg); padding: 20px;
+  border: 1px solid var(--border); box-shadow: var(--shadow-sm);
+  cursor: pointer; transition: box-shadow .2s, transform .15s, border-color .2s;
+}
+.method-card:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); border-color: #d1d5db; }
+.method-name { font-size: 0.8rem; font-weight: 700; margin-bottom: 8px; color: var(--text-2); }
+.method-nps { font-size: 1.9rem; font-weight: 900; letter-spacing: -1px; }
+.method-meta { font-size: 0.71rem; color: var(--text-3); margin-top: 5px; }
+
+/* ── RESPONSES TABLE ── */
+.table-filters { display: flex; gap: 8px; flex-wrap: wrap; }
+.tag-filter {
+  padding: 5px 12px; border-radius: 20px; border: 1px solid var(--border);
+  background: var(--surface); font-size: 0.72rem; font-weight: 600;
+  cursor: pointer; transition: all .15s; color: var(--text-2); font-family: inherit;
+}
+.tag-filter:hover { border-color: var(--indigo); color: var(--indigo-dark); }
+.tag-filter.active { background: var(--indigo-dark); color: #fff; border-color: var(--indigo-dark); }
+.search-box {
+  padding: 8px 14px; border: 1px solid var(--border); border-radius: var(--radius-sm);
+  font-size: 0.8rem; font-family: inherit; width: 260px; outline: none; background: var(--surface); color: var(--text);
+  transition: border-color .15s, box-shadow .15s;
+}
+.search-box:focus { border-color: var(--indigo); box-shadow: 0 0 0 3px rgba(99,102,241,.12); }
+
+table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+thead th {
+  text-align: left; padding: 10px 14px; font-size: 0.68rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .5px; color: var(--text-3);
+  border-bottom: 1px solid var(--border); background: var(--surface2);
+}
+thead th:first-child { border-radius: var(--radius-sm) 0 0 0; }
+thead th:last-child  { border-radius: 0 var(--radius-sm) 0 0; }
+tbody tr { border-bottom: 1px solid var(--border-light); cursor: pointer; transition: background .1s; }
+tbody tr:hover { background: #f8f9ff; }
+tbody td { padding: 12px 14px; vertical-align: middle; }
+.score-pill {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 34px; height: 34px; border-radius: 50%; font-weight: 800; font-size: 0.8rem;
+}
+.pill-p { background: #d1fae5; color: #065f46; }
+.pill-n { background: #fef3c7; color: #92400e; }
+.pill-d { background: #fee2e2; color: #991b1b; }
+.response-text { max-width: 320px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-2); }
+.tag-chip { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 0.67rem; font-weight: 700; margin: 1px; }
+.subcat-chip { display: inline-block; padding: 2px 7px; border-radius: 6px; font-size: 0.63rem; margin: 1px; border: 1px solid; font-weight: 500; }
+.pagination { display: flex; align-items: center; justify-content: space-between; margin-top: 16px; }
+.pagination span { font-size: 0.73rem; color: var(--text-3); }
+.page-btns { display: flex; gap: 4px; }
+.page-btn {
+  padding: 5px 11px; border: 1px solid var(--border); background: var(--surface);
+  border-radius: var(--radius-sm); font-size: 0.73rem; cursor: pointer; font-family: inherit;
+  color: var(--text-2); transition: all .15s;
+}
+.page-btn:hover { border-color: var(--indigo); color: var(--indigo-dark); }
+.page-btn.active { background: var(--indigo-dark); color: #fff; border-color: var(--indigo-dark); }
+
+/* ── MODAL ── */
+.modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(15,17,23,.5);
+  backdrop-filter: blur(4px);
+  z-index: 500; display: none; align-items: center; justify-content: center; padding: 20px;
+}
+.modal-overlay.open { display: flex; animation: fadeIn .18s ease; }
+@keyframes fadeIn { from { opacity:0 } to { opacity:1 } }
+.modal {
+  background: var(--surface); border-radius: var(--radius-xl); max-width: 620px; width: 100%;
+  max-height: 88vh; overflow-y: auto; padding: 32px;
+  box-shadow: var(--shadow-xl); border: 1px solid var(--border);
+  animation: slideUp .2s cubic-bezier(.4,0,.2,1);
+}
+@keyframes slideUp { from { transform: translateY(12px); opacity:.6 } to { transform: translateY(0); opacity:1 } }
+.modal-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 24px; gap: 12px; }
+.modal-title { font-size: 1.05rem; font-weight: 800; letter-spacing: -.3px; }
+.modal-close {
+  background: var(--surface2); border: 1px solid var(--border); border-radius: 50%;
+  width: 32px; height: 32px; cursor: pointer; font-size: 0.9rem; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center; color: var(--text-2);
+  transition: all .15s;
+}
+.modal-close:hover { background: var(--border); }
+.modal-row { display: flex; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
+.modal-meta { font-size: 0.78rem; color: var(--text-2); }
+.modal-section { margin-bottom: 20px; }
+.modal-section-title { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: .6px; color: var(--text-3); margin-bottom: 10px; }
+.modal-text {
+  font-size: 0.85rem; color: var(--text-2); line-height: 1.65;
+  background: var(--surface2); border-radius: var(--radius-md);
+  padding: 16px; border-left: 3px solid var(--indigo); border: 1px solid var(--border);
+}
+
+/* ── TREND SECTION ── */
+.trend-insights { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; margin-bottom: 18px; }
+.ti-card {
+  background: var(--surface); border-radius: var(--radius-lg); padding: 22px;
+  border: 1px solid var(--border); box-shadow: var(--shadow-sm); text-align: center;
+}
+.ti-val { font-size: 2rem; font-weight: 900; letter-spacing: -1px; }
+.ti-label { font-size: 0.72rem; color: var(--text-3); margin-top: 5px; font-weight: 600; text-transform: uppercase; letter-spacing: .4px; }
+.ti-detail { font-size: 0.77rem; color: var(--text-2); margin-top: 6px; }
+
+.legend-row { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 12px; }
+.leg { display: flex; align-items: center; gap: 6px; font-size: 0.72rem; color: var(--text-2); }
+.leg-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
+canvas { max-height: 260px; }
+
+/* ── CATEGORIES VIEW ── */
+.cat-sidebar {
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  position: sticky;
+  top: 120px;
+}
+.cat-sidebar-header {
+  padding: 14px 18px;
+  font-size: 0.68rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .6px; color: var(--text-3);
+  border-bottom: 1px solid var(--border);
+  background: var(--surface2);
+}
+.cat-list-item {
+  display: flex; align-items: center; gap: 10px; padding: 10px 16px;
+  cursor: pointer; border-bottom: 1px solid var(--border-light);
+  transition: background .12s; border-left: 3px solid transparent;
+}
+.cat-list-item:last-child { border-bottom: none; }
+.cat-list-item:hover { background: #f8f9ff; }
+.cat-list-item.active { background: var(--indigo-light); border-left-color: var(--indigo-dark); }
+.cat-list-item.active .cat-list-name { color: var(--indigo-dark); font-weight: 700; }
+.cat-list-name { font-size: 0.79rem; font-weight: 500; flex: 1; color: var(--text-2); }
+.cat-list-count { font-size: 0.67rem; font-weight: 700; padding: 2px 7px; border-radius: 20px; }
+.cat-list-nps { font-size: 0.71rem; font-weight: 800; min-width: 32px; text-align: right; }
+
+.cat-panel { display: flex; flex-direction: column; gap: 14px; }
+.cat-panel-header {
+  background: var(--surface); border-radius: var(--radius-lg); padding: 22px 24px;
+  border: 1px solid var(--border); box-shadow: var(--shadow-sm);
+  display: flex; align-items: center; gap: 20px; flex-wrap: wrap;
+}
+.cat-panel-title { font-size: 1rem; font-weight: 800; flex: 1; letter-spacing: -.3px; }
+.cat-stat-box { text-align: center; min-width: 72px; }
+.cat-stat-val { font-size: 1.5rem; font-weight: 900; letter-spacing: -.5px; }
+.cat-stat-lbl { font-size: 0.67rem; color: var(--text-3); margin-top: 3px; text-transform: uppercase; letter-spacing: .4px; font-weight: 600; }
+
+.cat-subcats {
+  background: var(--surface); border-radius: var(--radius-lg); padding: 18px 22px;
+  border: 1px solid var(--border); box-shadow: var(--shadow-sm);
+}
+.cat-subcats-title { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: .6px; color: var(--text-3); margin-bottom: 10px; }
+
+.cat-feedback-list { display: flex; flex-direction: column; gap: 10px; }
+.cat-feedback-card {
+  background: var(--surface); border-radius: var(--radius-md); padding: 18px 20px;
+  border: 1px solid var(--border); box-shadow: var(--shadow-sm);
+  cursor: pointer; transition: box-shadow .18s, transform .12s, border-color .15s;
+  border-left: 3px solid var(--border);
+}
+.cat-feedback-card:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); border-color: #d1d5db; }
+.cat-feedback-card.border-p { border-left-color: #059669; }
+.cat-feedback-card.border-n { border-left-color: #d97706; }
+.cat-feedback-card.border-d { border-left-color: #dc2626; }
+.cat-feedback-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; gap: 10px; flex-wrap: wrap; }
+.cat-feedback-meta { font-size: 0.7rem; color: var(--text-3); }
+.cat-feedback-text { font-size: 0.84rem; color: var(--text-2); line-height: 1.6; margin-bottom: 12px; font-style: italic; }
+.cat-feedback-chips { display: flex; gap: 5px; flex-wrap: wrap; }
+.cat-empty { text-align: center; padding: 48px; color: var(--text-3); font-size: 0.85rem; }
+.cat-count-badge { background: var(--indigo-light); color: var(--indigo-dark); font-size: 0.71rem; font-weight: 700; padding: 4px 11px; border-radius: 20px; }
+
+/* ── TEAMS VIEW ── */
+.teams-selector { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 22px; }
+.team-tab {
+  display: flex; align-items: center; gap: 9px; padding: 10px 18px;
+  border-radius: var(--radius-md); border: 1px solid var(--border);
+  background: var(--surface); cursor: pointer; transition: all .18s;
+  font-size: 0.82rem; font-weight: 600; color: var(--text-2);
+  box-shadow: var(--shadow-sm); font-family: inherit;
+}
+.team-tab:hover { border-color: #a5b4fc; color: var(--indigo-dark); box-shadow: var(--shadow-md); transform: translateY(-1px); }
+.team-tab.active { color: #fff; box-shadow: 0 4px 12px rgba(0,0,0,.18); transform: translateY(-1px); }
+.team-tab-icon { font-size: 1rem; }
+.team-tab-name { font-size: 0.82rem; font-weight: 700; }
+.team-tab-count { font-size: 0.68rem; background: rgba(255,255,255,.22); padding: 2px 7px; border-radius: 10px; font-weight: 600; }
+
+.team-panel-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; margin-bottom: 16px; }
+.team-kpi {
+  background: var(--surface); border-radius: var(--radius-md); padding: 18px;
+  border: 1px solid var(--border); box-shadow: var(--shadow-sm); text-align: center;
+}
+.team-kpi-val { font-size: 1.7rem; font-weight: 900; letter-spacing: -.5px; }
+.team-kpi-lbl { font-size: 0.68rem; color: var(--text-3); margin-top: 4px; text-transform: uppercase; letter-spacing: .4px; font-weight: 600; }
+
+.team-cat-pills { display: flex; gap: 7px; flex-wrap: wrap; }
+.team-cat-pill {
+  padding: 5px 13px; border-radius: 20px; font-size: 0.76rem; font-weight: 700;
+  cursor: pointer; border: 1.5px solid transparent; transition: all .15s; font-family: inherit;
+}
+.team-cat-pill:hover { filter: brightness(.92); transform: translateY(-1px); }
+.team-cat-pill.inactive { opacity: .38; }
+.team-feed-empty { text-align: center; padding: 48px; color: var(--text-3); font-size: 0.85rem; }
+
+@media (max-width: 1024px) {
+  .kpi-row { grid-template-columns: 1fr 1fr; }
+  .charts-row { grid-template-columns: 1fr; }
+  .team-panel-grid { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 768px) {
+  header { padding: 0 16px; }
+  .filters { padding: 0 16px; }
+  .main { padding: 16px; }
+  .tips-grid, .method-row, .trend-insights { grid-template-columns: 1fr; }
+  #catLayout { grid-template-columns: 1fr !important; }
+  .cat-sidebar { position: static; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">📊</div>
+    NPS Dashboard
+  </div>
+  <div class="header-right">
+    <span class="period-badge">27 odpowiedzi · aktualizacja 07.04.2026</span>
+  </div>
+</header>
+
+<div class="filters">
+  <div class="filter-group">
+    <label>Okres</label>
+    <select id="fPeriod" onchange="refresh()">
+      <option value="all">Ostatnie 12 miesięcy</option>
+      <option value="q1">Q1 2026</option>
+      <option value="q4">Q4 2025</option>
+      <option value="q3">Q3 2025</option>
+    </select>
+  </div>
+  <div class="filter-group">
+    <label>Segment</label>
+    <select id="fSegment" onchange="refresh()">
+      <option value="all">Wszystkie momenty</option>
+      <option value="NPS Onboarding">🚀 Onboarding</option>
+      <option value="NPS Współpracy">🤝 Współpracy</option>
+      <option value="NPS Zakończenia kursu">🎓 Zakończenie kursu</option>
+      <option value="NPS Odnowień">🔄 Odnowienia</option>
+      <option value="NPS Rezygnacji">⚠️ Rezygnacje</option>
+    </select>
+  </div>
+  <div class="filter-group">
+    <label>Metoda</label>
+    <select id="fMethod" onchange="refresh()">
+      <option value="all">Wszystkie metody</option>
+      <option value="Email">Email</option>
+      <option value="In-app">In-app</option>
+      <option value="Post-call">Post-call</option>
+    </select>
+  </div>
+  <div class="filter-divider"></div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="switchView('overview')">Przegląd</button>
+    <button class="nav-tab" onclick="switchView('trend')">Trendy</button>
+    <button class="nav-tab" onclick="switchView('categories')">Kategorie</button>
+    <button class="nav-tab" onclick="switchView('teams')">Zespoły</button>
+    <button class="nav-tab" onclick="switchView('responses')">Odpowiedzi</button>
+    <button class="nav-tab" onclick="switchView('tips')">Wskazówki</button>
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- ══ OVERVIEW ══ -->
+  <div class="view active" id="view-overview">
+
+    <div class="kpi-row">
+      <div class="kpi-card kpi-main" onclick="switchView('trend')">
+        <div class="kpi-label">NPS Score (ogółem)</div>
+        <div class="kpi-value" id="npsVal">+42</div>
+        <div class="kpi-sub">Skala od -100 do +100</div>
+        <span class="kpi-change up" id="npsDelta">▲ +7 vs poprzedni okres</span>
+      </div>
+      <div class="kpi-card" onclick="openGroupModal('promoters')">
+        <div class="kpi-label">Promotorzy</div>
+        <div class="prom-val" id="promVal">58%</div>
+        <div class="kpi-sub">Ocena 9–10</div>
+        <div class="bar-mini"><div class="bar-fill" id="barP" style="width:58%;background:#16a34a"></div></div>
+        <span class="kpi-change up" id="promDelta" style="margin-top:8px">▲ +3pp</span>
+      </div>
+      <div class="kpi-card" onclick="openGroupModal('passives')">
+        <div class="kpi-label">Pasywni</div>
+        <div class="pass-val" id="passVal">26%</div>
+        <div class="kpi-sub">Ocena 7–8</div>
+        <div class="bar-mini"><div class="bar-fill" id="barN" style="width:26%;background:#ca8a04"></div></div>
+        <span class="kpi-change flat" style="margin-top:8px">→ bez zmian</span>
+      </div>
+      <div class="kpi-card" onclick="openGroupModal('detractors')">
+        <div class="kpi-label">Krytycy</div>
+        <div class="det-val" id="detVal">16%</div>
+        <div class="kpi-sub">Ocena 0–6</div>
+        <div class="bar-mini"><div class="bar-fill" id="barD" style="width:16%;background:#dc2626"></div></div>
+        <span class="kpi-change up" style="margin-top:8px">▼ -3pp (lepiej)</span>
+      </div>
+    </div>
+
+    <div class="charts-row">
+      <div class="card">
+        <div class="card-title">Trend NPS miesięcznie</div>
+        <div class="card-sub">Kliknij punkt aby zobaczyć szczegóły miesiąca</div>
+        <canvas id="trendChartOv"></canvas>
+        <div class="legend-row" style="margin-top:12px">
+          <div class="leg"><div class="leg-dot" style="background:#4f46e5"></div>NPS Score</div>
+          <div class="leg"><div class="leg-dot" style="background:#16a34a"></div>Promotorzy %</div>
+          <div class="leg"><div class="leg-dot" style="background:#ef4444"></div>Krytycy %</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Rozkład odpowiedzi</div>
+        <div class="card-sub">Podział na grupy respondentów</div>
+        <canvas id="donutChart"></canvas>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:20px">
+      <div class="card-title">NPS według segmentów</div>
+      <div class="card-sub">Kliknij segment aby zobaczyć szczegóły odpowiedzi</div>
+      <div id="segContainer"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">NPS według metody pozyskiwania</div>
+      <div class="card-sub">Porównanie wyników z różnych kanałów zbierania feedbacku</div>
+      <div class="method-row" id="methodContainer" style="margin-top:16px; margin-bottom:0"></div>
+    </div>
+
+  </div>
+
+  <!-- ══ TREND ══ -->
+  <div class="view" id="view-trend">
+
+    <div class="trend-insights" id="trendInsights"></div>
+
+    <div class="card" style="margin-bottom:20px">
+      <div class="card-title">Trend NPS — szczegółowy widok</div>
+      <div class="card-sub">Ewolucja wyników w czasie z podziałem na grupy respondentów</div>
+      <canvas id="trendChartFull" style="max-height:300px"></canvas>
+      <div class="legend-row" style="margin-top:12px">
+        <div class="leg"><div class="leg-dot" style="background:#4f46e5"></div>NPS Score</div>
+        <div class="leg"><div class="leg-dot" style="background:#16a34a"></div>Promotorzy %</div>
+        <div class="leg"><div class="leg-dot" style="background:#ca8a04"></div>Pasywni %</div>
+        <div class="leg"><div class="leg-dot" style="background:#ef4444"></div>Krytycy %</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Liczba odpowiedzi miesięcznie</div>
+      <div class="card-sub">Wolumen zebranych odpowiedzi</div>
+      <canvas id="volumeChart" style="max-height:180px; margin-top:14px"></canvas>
+    </div>
+
+  </div>
+
+  <!-- ══ CATEGORIES ══ -->
+  <div class="view" id="view-categories">
+    <div id="catLayout" style="display:grid;grid-template-columns:260px 1fr;gap:18px;align-items:start"></div>
+  </div>
+
+  <!-- ══ TEAMS ══ -->
+  <div class="view" id="view-teams">
+    <div id="teamsLayout"></div>
+  </div>
+
+  <!-- ══ RESPONSES ══ -->
+  <div class="view" id="view-responses">
+    <div class="card">
+      <div class="card-title">Odpowiedzi klientów</div>
+      <div class="card-sub">Kliknij wiersz aby zobaczyć pełną odpowiedź z tagami i podkategoriami</div>
+      <div class="table-filters" id="tagFilters" style="margin-top:16px"></div>
+      <div style="display:flex; gap:10px; margin-bottom:14px; flex-wrap:wrap">
+        <input class="search-box" id="searchBox" placeholder="🔍 Szukaj w odpowiedziach..." oninput="renderTable()">
+        <select style="padding:7px 12px;border:1px solid #ddd;border-radius:8px;font-size:0.8rem;outline:none" id="scoreFilter" onchange="renderTable()">
+          <option value="all">Wszystkie oceny</option>
+          <option value="promoter">Promotorzy (9-10)</option>
+          <option value="passive">Pasywni (7-8)</option>
+          <option value="detractor">Krytycy (0-6)</option>
+        </select>
+      </div>
+      <div style="overflow-x:auto">
+        <table>
+          <thead>
+            <tr>
+              <th>Ocena</th>
+              <th>Odpowiedź</th>
+              <th>Moment NPS</th>
+              <th>Metoda</th>
+              <th>Kategoria <span style="font-weight:400;opacity:.6;text-transform:none;letter-spacing:0">(1 wiersz = 1 kategoria)</span></th>
+              <th>Podkategoria</th>
+              <th>Data</th>
+            </tr>
+          </thead>
+          <tbody id="responseTable"></tbody>
+        </table>
+      </div>
+      <div class="pagination">
+        <span id="pageInfo"></span>
+        <div class="page-btns" id="pageBtns"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ TIPS ══ -->
+  <div class="view" id="view-tips">
+    <div class="tips-grid" id="tipsContainer"></div>
+  </div>
+
+</div>
+
+<!-- ══ MODAL ══ -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
+  <div class="modal" id="modalContent"></div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+// DANE DEMO
+// ═══════════════════════════════════════════════════════════════
+const TAG_COLORS = {
+  'sprzedaż':                    { bg: '#fef3c7', color: '#92400e' },
+  'lekcje':                      { bg: '#dbeafe', color: '#1d4ed8' },
+  'opiekun/brak opiekuna':       { bg: '#f3e8ff', color: '#7c3aed' },
+  'brak czasu':                  { bg: '#fce7f3', color: '#9d174d' },
+  'brak kontaktu':               { bg: '#ffedd5', color: '#c2410c' },
+  'brak motywacji':              { bg: '#fee2e2', color: '#991b1b' },
+  'brak wsparcia/zainteresowania':{ bg: '#fdf2f8', color: '#86198f' },
+  'cena':                        { bg: '#fef9c3', color: '#854d0e' },
+  'dostępność':                  { bg: '#e0f2fe', color: '#0369a1' },
+  'elastyczność':                { bg: '#d1fae5', color: '#065f46' },
+  'finansowanie':                { bg: '#f0fdf4', color: '#15803d' },
+  'forma nauki':                 { bg: '#eff6ff', color: '#1e40af' },
+  'formalności i umowa':         { bg: '#fff1f2', color: '#9f1239' },
+  'funkcje Platformy':           { bg: '#f5f3ff', color: '#6d28d9' },
+  'materiały':                   { bg: '#ecfdf5', color: '#047857' },
+  'jakość obsługi':              { bg: '#dcfce7', color: '#15803d' },
+  'problemy techniczne':         { bg: '#fef2f2', color: '#b91c1c' },
+  'lektor':                      { bg: '#bfdbfe', color: '#1e40af' },
+  'lekcje grupowe':              { bg: '#f0f9ff', color: '#0369a1' },
+  'niespełnione obietnice':      { bg: '#fff7ed', color: '#9a3412' },
+  'program poleceń':             { bg: '#f8fafc', color: '#334155' },
+  'progres':                     { bg: '#f0fdf4', color: '#166534' },
+  'wygoda':                      { bg: '#fdf4ff', color: '#7e22ce' },
+};
+const SUBCAT_COLORS = {
+  // sprzedaż
+  'Obietnice handlowca':      { bg: '#fef3c7', color: '#92400e', border: '#fde68a' },
+  'Presja sprzedażowa':       { bg: '#fff7ed', color: '#c2410c', border: '#fed7aa' },
+  'Informacje o ofercie':     { bg: '#fefce8', color: '#854d0e', border: '#fde047' },
+  // lekcje
+  'Jakość lekcji':            { bg: '#dbeafe', color: '#1d4ed8', border: '#bfdbfe' },
+  'Częstotliwość lekcji':     { bg: '#eff6ff', color: '#1e40af', border: '#bfdbfe' },
+  'Planowanie terminu':       { bg: '#e0f2fe', color: '#075985', border: '#bae6fd' },
+  // opiekun
+  'Brak przypisanego opiekuna':{ bg: '#f5f3ff', color: '#6d28d9', border: '#ddd6fe' },
+  'Zmiana opiekuna':          { bg: '#fdf4ff', color: '#7c3aed', border: '#e9d5ff' },
+  'Dostępność opiekuna':      { bg: '#f3e8ff', color: '#7e22ce', border: '#e9d5ff' },
+  // brak czasu
+  'Harmonogram':              { bg: '#fce7f3', color: '#9d174d', border: '#fbcfe8' },
+  'Nieregularność':           { bg: '#fdf2f8', color: '#86198f', border: '#f5d0fe' },
+  // brak kontaktu
+  'Brak odpowiedzi':          { bg: '#ffedd5', color: '#9a3412', border: '#fed7aa' },
+  'Opóźnienia':               { bg: '#fff7ed', color: '#c2410c', border: '#fed7aa' },
+  'Inicjatywa kontaktu':      { bg: '#fef3c7', color: '#92400e', border: '#fde68a' },
+  // brak motywacji
+  'Brak postępów':            { bg: '#fee2e2', color: '#991b1b', border: '#fecaca' },
+  'Cele nauki':               { bg: '#fff1f2', color: '#9f1239', border: '#fecdd3' },
+  'Rutyna':                   { bg: '#fef2f2', color: '#b91c1c', border: '#fecaca' },
+  // brak wsparcia
+  'Indywidualne podejście':   { bg: '#fdf2f8', color: '#86198f', border: '#f5d0fe' },
+  'Monitoring postępów':      { bg: '#fce7f3', color: '#9d174d', border: '#fbcfe8' },
+  // cena
+  'Cena vs wartość':          { bg: '#fef9c3', color: '#854d0e', border: '#fde047' },
+  'Podwyżki':                 { bg: '#fefce8', color: '#713f12', border: '#fde047' },
+  // dostępność
+  'Godziny lekcji':           { bg: '#e0f2fe', color: '#0369a1', border: '#bae6fd' },
+  'Dostępność lektorów':      { bg: '#f0f9ff', color: '#075985', border: '#bae6fd' },
+  // elastyczność
+  'Zmiana terminów':          { bg: '#d1fae5', color: '#065f46', border: '#a7f3d0' },
+  'Odwoływanie lekcji':       { bg: '#ecfdf5', color: '#047857', border: '#a7f3d0' },
+  // finansowanie
+  'Raty':                     { bg: '#f0fdf4', color: '#15803d', border: '#bbf7d0' },
+  'Opcje płatności':          { bg: '#dcfce7', color: '#166534', border: '#bbf7d0' },
+  // forma nauki
+  'Online vs offline':        { bg: '#eff6ff', color: '#1e40af', border: '#bfdbfe' },
+  'Narzędzia nauki':          { bg: '#dbeafe', color: '#1d4ed8', border: '#bfdbfe' },
+  // formalności
+  'Warunki rezygnacji':       { bg: '#fff1f2', color: '#9f1239', border: '#fecdd3' },
+  'Długość umowy':            { bg: '#fee2e2', color: '#991b1b', border: '#fecaca' },
+  // funkcje platformy
+  'UX/UI Platformy':          { bg: '#f5f3ff', color: '#6d28d9', border: '#ddd6fe' },
+  'Brakujące funkcje':        { bg: '#f3e8ff', color: '#7c3aed', border: '#e9d5ff' },
+  'Błędy techniczne':         { bg: '#fdf4ff', color: '#7e22ce', border: '#e9d5ff' },
+  // materiały
+  'Jakość materiałów':        { bg: '#ecfdf5', color: '#047857', border: '#a7f3d0' },
+  'Dopasowanie do poziomu':   { bg: '#d1fae5', color: '#065f46', border: '#a7f3d0' },
+  // jakość obsługi
+  'Czas reakcji':             { bg: '#dcfce7', color: '#15803d', border: '#bbf7d0' },
+  'Kompetencje BOK':          { bg: '#f0fdf4', color: '#166534', border: '#bbf7d0' },
+  // problemy techniczne
+  'Stabilność Platformy':     { bg: '#fef2f2', color: '#b91c1c', border: '#fecaca' },
+  'Prędkość ładowania':       { bg: '#fee2e2', color: '#991b1b', border: '#fecaca' },
+  // lektor grupowe
+  'Jakość lektora':           { bg: '#f0f9ff', color: '#0369a1', border: '#bae6fd' },
+  'Poziom grupy':             { bg: '#e0f2fe', color: '#075985', border: '#bae6fd' },
+  // niespełnione obietnice
+  'Niezgodność z ofertą':     { bg: '#fff7ed', color: '#9a3412', border: '#fed7aa' },
+  'Oczekiwania vs rzeczywistość': { bg: '#ffedd5', color: '#c2410c', border: '#fed7aa' },
+  // program poleceń
+  'Nagrody':                  { bg: '#f8fafc', color: '#334155', border: '#e2e8f0' },
+  'Zasady programu':          { bg: '#f1f5f9', color: '#475569', border: '#e2e8f0' },
+  // progres
+  'Tempo nauki':              { bg: '#f0fdf4', color: '#166534', border: '#bbf7d0' },
+  'Ocena poziomu':            { bg: '#dcfce7', color: '#15803d', border: '#bbf7d0' },
+  // sprzedaż
+  'Jasność warunków umowy':   { bg: '#fef9c3', color: '#854d0e', border: '#fde047' },
+  'Warunki finansowania':     { bg: '#fef3c7', color: '#92400e', border: '#fde68a' },
+  'Obsługa przy podpisaniu':  { bg: '#fff7ed', color: '#9a3412', border: '#fed7aa' },
+  'Zgodność oferty z faktem': { bg: '#ffedd5', color: '#c2410c', border: '#fed7aa' },
+  'Pierwsze dni po zakupie':  { bg: '#fef2f2', color: '#b91c1c', border: '#fecaca' },
+  'Brak info o opiekunie':    { bg: '#fee2e2', color: '#991b1b', border: '#fecaca' },
+  // lektorzy
+  'Kompetencje lektora':      { bg: '#e0f2fe', color: '#0369a1', border: '#bae6fd' },
+  'Zaangażowanie lektora':    { bg: '#f0f9ff', color: '#075985', border: '#bae6fd' },
+  'Punktualność':             { bg: '#fef9c3', color: '#854d0e', border: '#fde047' },
+  'Nieobecność lektora':      { bg: '#fee2e2', color: '#991b1b', border: '#fecaca' },
+  'Kultura osobista':         { bg: '#f0fdf4', color: '#15803d', border: '#bbf7d0' },
+  'Akcent lektora':           { bg: '#fdf4ff', color: '#7e22ce', border: '#e9d5ff' },
+  'Kraj pochodzenia':         { bg: '#fff7ed', color: '#9a3412', border: '#fed7aa' },
+  'Kreatywność na lekcji':    { bg: '#eff6ff', color: '#1e40af', border: '#bfdbfe' },
+  'Dostosowanie do ucznia':   { bg: '#ecfdf5', color: '#047857', border: '#a7f3d0' },
+};
+
+const PERIODS = {
+  all: {
+    labels: ['Maj','Cze','Lip','Sie','Wrz','Paź','Lis','Gru','Sty','Lut','Mar','Kwi'],
+    nps:        [28,32,30,35,38,36,40,38,42,44,43,45],
+    promoters:  [50,52,51,55,57,56,58,57,60,61,60,62],
+    passives:   [28,27,29,26,26,27,24,25,24,24,25,23],
+    detractors: [22,21,20,19,17,17,18,18,16,15,15,15],
+    responses:  [120,145,132,160,178,155,190,142,210,198,220,175],
+    total: { nps:19, prom:48, pass:22, det:30 },
+  },
+  q1: {
+    labels: ['Sty','Lut','Mar'],
+    nps:       [42,44,43], promoters:[60,61,60], passives:[24,24,25], detractors:[18,15,15],
+    responses: [210,198,220],
+    total: { nps:44, prom:60, pass:25, det:15 },
+  },
+  q4: {
+    labels: ['Paź','Lis','Gru'],
+    nps:       [36,40,38], promoters:[56,58,57], passives:[27,24,25], detractors:[17,18,18],
+    responses: [155,190,142],
+    total: { nps:38, prom:56, pass:27, det:17 },
+  },
+  q3: {
+    labels: ['Lip','Sie','Wrz'],
+    nps:       [30,35,38], promoters:[51,55,57], passives:[29,26,26], detractors:[20,19,17],
+    responses: [132,160,178],
+    total: { nps:35, prom:55, pass:27, det:18 },
+  },
+};
+
+const SEGMENTS_ALL = [
+  { name:'NPS Onboarding',        nps:100, prom:100, pass:0,  det:0,  resp:1,  trend:'',    icon:'🚀', desc:'Pierwsze tygodnie nauki — start, pierwsze lekcje, kontakt z opiekunem' },
+  { name:'NPS Współpracy',        nps:13,  prom:48,  pass:17, det:35, resp:23, trend:'',    icon:'🤝', desc:'W trakcie trwania kursu — jakość lekcji, zaangażowanie, postępy' },
+  { name:'NPS Zakończenia kursu', nps:0,   prom:0,   pass:100,det:0,  resp:1,  trend:'',    icon:'🎓', desc:'Po zakończeniu kursu — ocena całości, certyfikat, progres' },
+  { name:'NPS Odnowień',          nps:50,  prom:50,  pass:50, det:0,  resp:2,  trend:'',    icon:'🔄', desc:'Klienci którzy zdecydowali się odnowić umowę' },
+  { name:'NPS Rezygnacji',        nps:0,   prom:0,   pass:0,  det:0,  resp:0,  trend:'',    icon:'⚠️', desc:'Klienci którzy zrezygnowali — kluczowe powody odejścia' },
+];
+
+const METHODS = [
+  { name:'Email',      nps:38, prom:55, pass:27, det:18, resp:1520, icon:'📧' },
+  { name:'In-app',     nps:51, prom:67, pass:21, det:12, resp:890,  icon:'📱' },
+  { name:'Post-call',  nps:44, prom:61, pass:23, det:16, resp:340,  icon:'📞' },
+];
+
+const RESPONSES = [
+  // ── NPS WSPÓŁPRACY ──
+  {id:1,score:10,segment:'NPS Współpracy',method:'Badanie NPS',date:'2026-01-15',tags:["funkcje Platformy", "materiały", "lektor"],subcats:[],text:`1. łatwe użytkowanie. 2. dobre materiały. 3. bardzo dobrzy lektorzy.`},
+  {id:2,score:10,segment:'NPS Współpracy',method:'Badanie NPS',date:'2026-01-15',tags:["dostępność", "elastyczność", "lektor"],subcats:[],text:`w tutlo podoba mi się najbardziej możliwość wyboru lektorów, elastyczny czas ich pracy, zawsze jest możliwość przełożenia lub odmówienia lekcji. mój syn bardzo polubił pana dawida, z którym uczy się już rok angielskiego i przede wszystkim po roku nauki chce to nadal robić.`},
+  {id:3,score:2,segment:'NPS Współpracy',method:'Badanie NPS',date:'2026-01-15',tags:["lektor", "materiały", "funkcje Platformy"],subcats:[],text:`lekcje są proste i nudne, nie czuję, że się uczę, a nie jest to tania usługa. szukanie lektorów jest męczące i trudne (także przez design strony). zajęło mi kilka miesięcy, zanim znalazłam osoby, z którymi dobrze mi się rozmawia. najlepsze lekcje na tutlo to te, które nie uwzględniają stricte pracy z materiałami dostępnymi na stronie`},
+  {id:4,score:10,segment:'NPS Współpracy',method:'Badanie NPS',date:'2026-01-15',tags:["dostępność"],subcats:[],text:`dostępność lektorów o każdej godzinie 7 dni w tygodniu`},
+  {id:5,score:2,segment:'NPS Współpracy',method:'Badanie NPS',date:'2026-01-15',tags:["sprzedaż", "niespełnione obietnice"],subcats:[],text:`nie oklamywac klientow w trakcie procesu sprzedazowego`},
+  {id:6,score:10,segment:'NPS Współpracy',method:'Badanie NPS',date:'2026-01-15',tags:["wygoda", "funkcje Platformy", "dostępność"],subcats:[],text:`wygoda korzystania, ciekawa i czytelna platforma, duży wybór lektorów`},
+  {id:7,score:7,segment:'NPS Współpracy',method:'Badanie NPS',date:'2026-01-15',tags:["formalności i umowa", "elastyczność"],subcats:[],text:`umowa na długi okres bez możliwości zmiany wybranego planu nauki. fajnie byłoby po okresie 3 m- 6 msc mieć możliwość renegocjacji sposobu nauczania.`},
+  {id:8,score:10,segment:'NPS Współpracy',method:'Badanie NPS',date:'2026-01-15',tags:["forma nauki", "progres"],subcats:[],text:`podobają mi się zajęcia, które ma mój syn. widzę i słyszę jak podniósł się poziom angielskiego w mowie i rozumieniu.`},
+  // ── NPS ODNOWIEŃ ──
+  {id:9,score:8,segment:'NPS Odnowień',method:'Badanie NPS',date:'2026-01-15',tags:["formalności i umowa"],subcats:[],text:`utrudnione załatwienie formalności`},
+  // ── NPS WSPÓŁPRACY ──
+  {id:10,score:10,segment:'NPS Współpracy',method:'Badanie NPS',date:'2026-01-15',tags:["materiały", "lektor"],subcats:[],text:`interesujące kursy oraz bardzo mili i kompetentni lektorzy`},
+  {id:11,score:10,segment:'NPS Współpracy',method:'Badanie NPS',date:'2026-01-15',tags:["lektor"],subcats:[],text:`córka chętnie uczestniczy w lekcjach angielskiego i systematycznie się rozwija. panią alicję uwielbia. polecam:)`},
+  // ── NPS ODNOWIEŃ ──
+  {id:12,score:9,segment:'NPS Odnowień',method:'Badanie NPS',date:'2026-01-15',tags:["lektor", "forma nauki"],subcats:[],text:`lekcje z tytorką są bardzo dobrze prowadzone. motywuje mnie to do nauki. forma lekcji i jej czas trwania są dla mnie optymalne i bardzo wygodne.`},
+  // ── NPS WSPÓŁPRACY ──
+  {id:13,score:8,segment:'NPS Współpracy',method:'Badanie NPS',date:'2026-01-15',tags:["problemy techniczne", "funkcje Platformy"],subcats:[],text:`zdarza się, że nie mogę połączyć się z lektorem na umówioną lekcję. narzędzia pióra, ołówka są mało widoczne podczas robienia notatek, zaznaczeń.`},
+  {id:14,score:9,segment:'NPS Współpracy',method:'Badanie NPS',date:'2026-01-15',tags:["funkcje Platformy"],subcats:[],text:`gdyby nie te autoreklamy, których nie idzie wyłączyć byłoby 10. poza tym nie mam zastrzeżeń. wszystko jest takie jak mówił pan patryk przed podpisaniem umowy ;)`},
+  {id:15,score:7,segment:'NPS Współpracy',method:'Badanie NPS',date:'2026-01-15',tags:["dostępność"],subcats:[],text:`ci sami lektorzy, trudno spróbować kogoś nowego.`},
+  {id:16,score:10,segment:'NPS Współpracy',method:'Badanie NPS',date:'2026-01-15',tags:["lektor", "materiały"],subcats:[],text:`wspólpraca z lektorem i ciekawie opracowany materiał do pracy samodzielnej`},
+  {id:17,score:1,segment:'NPS Współpracy',method:'Badanie NPS',date:'2026-01-15',tags:["brak wsparcia/zainteresowania"],subcats:[],text:`mobilizować kursantów 😠`},
+  {id:18,score:10,segment:'NPS Współpracy',method:'Badanie NPS',date:'2026-01-15',tags:["lektor"],subcats:[],text:`super atmosfera i pomocni nauczyciele`},
+  {id:19,score:8,segment:'NPS Współpracy',method:'Badanie NPS',date:'2026-01-15',tags:["materiały"],subcats:[],text:`fiszek do nauki słówek po zajęciach`},
+  // ── NPS ONBOARDING ──
+  {id:20,score:9,segment:'NPS Onboarding',method:'Badanie NPS',date:'2026-01-15',tags:["opiekun/brak opiekuna", "jakość obsługi"],subcats:[],text:`dostępność, opieka osoby wprowadzającej i czuwającej nad zrozumieniem wszystkich procedur`},
+  // ── NPS WSPÓŁPRACY ──
+  {id:21,score:0,segment:'NPS Współpracy',method:'Badanie NPS',date:'2026-01-15',tags:["jakość obsługi"],subcats:[],text:`macie klienta w d.`},
+  {id:22,score:5,segment:'NPS Współpracy',method:'Badanie NPS',date:'2026-01-15',tags:["formalności i umowa", "finansowanie", "lektor", "progres"],subcats:[],text:`okres 2 letni za długo. dziecko po roku już nie chciało brak możliwości wcześniejszego rozwiązania umowy musisz się zdecydować na dwa lata i koniec. przedewszystkim powinno od razu zostać ustalone sprawy dotyczące płatności ze jest to kredyt z góry płacisz całość a potem spłacasz kredyt. mój syn z łatwością robi poziom podstawowy od roku nikt go nie przepisał do waszego stopnia mimo ze nauczyciele widza że potrafi więcej.`},
+  {id:23,score:10,segment:'NPS Współpracy',method:'Badanie NPS',date:'2026-01-15',tags:["progres"],subcats:[],text:`widać efekty!`},
+  {id:24,score:0,segment:'NPS Współpracy',method:'Badanie NPS',date:'2026-01-15',tags:["lektor", "opiekun/brak opiekuna"],subcats:[],text:`zadbać o relacje z uczącymi się, tak aby nie byli przypadkowymi uczniami przypadkowych nauczycieli`},
+  // ── NPS ZAKOŃCZENIA KURSU ──
+  {id:25,score:7,segment:'NPS Zakończenia kursu',method:'Badanie NPS',date:'2026-01-15',tags:["materiały", "forma nauki"],subcats:[],text:`więcej zadań do pracy samodzielnej.`},
+  // ── NPS WSPÓŁPRACY ──
+  {id:26,score:5,segment:'NPS Współpracy',method:'Badanie NPS',date:'2026-01-15',tags:["problemy techniczne", "lektor"],subcats:[],text:`problem z odtwarzaniem filmów jak i ćwiczeń jest zawsze zauważalny wieczorem tego problemu nie ma rano. odechciewa się uczyć w momencie gdy 3 minutowy film próbujesz obejrzeć od 15 minut. jedynie wspaniali lektorzy ratują sytuację. wytłumaczeniem jest zła jakość połączenia internetowego, jednak inne platformy odtwarzają bez problemów`},
+  {id:27,score:2,segment:'NPS Współpracy',method:'Badanie NPS',date:'2026-01-15',tags:["forma nauki", "progres"],subcats:[],text:`nie jestem do końca zadowolona z nauki. antek się nudzi na zajęciach myślałam że po 2 latach nauki będzie coś wiedział`},
+];
+
+const TEAMS = [
+  {
+    id: 'materialy',
+    name: 'Materiały',
+    icon: '📚',
+    color: '#1d4ed8',
+    bg: '#dbeafe',
+    desc: 'Materiały edukacyjne, aspekty metodyczne, lekcje grupowe',
+    categories: ['materiały', 'lektor', 'lekcje grupowe'],
+  },
+  {
+    id: 'platform',
+    name: 'Platforma',
+    icon: '💻',
+    color: '#7c3aed',
+    bg: '#f3e8ff',
+    desc: 'Problemy techniczne, funkcjonalności, interfejs, narzędzia, aspekty wizualne i łatwość użytkowania',
+    categories: ['problemy techniczne', 'funkcje Platformy'],
+  },
+  {
+    id: 'lektorzy',
+    name: 'Lektorzy',
+    icon: '🎓',
+    color: '#0369a1',
+    bg: '#e0f2fe',
+    desc: 'Jakość pracy, kompetencje, dostępność, punktualność, zaangażowanie, akcent, kraj pochodzenia, kultura osobista',
+    categories: ['lektor', 'lekcje grupowe', 'dostępność', 'brak motywacji'],
+  },
+  {
+    id: 'sprzedaz',
+    name: 'Sprzedaż',
+    icon: '🤝',
+    color: '#b45309',
+    bg: '#fef3c7',
+    desc: 'Obsługa przy zawarciu umowy, obietnice sprzedażowe, kontakt z opiekunem, warunki i finansowanie',
+    categories: ['sprzedaż', 'niespełnione obietnice', 'opiekun/brak opiekuna', 'finansowanie', 'brak kontaktu'],
+  },
+  {
+    id: 'formalnosci',
+    name: 'Formalności i umowa',
+    icon: '📋',
+    color: '#9f1239',
+    bg: '#fff1f2',
+    desc: 'Warunki umowy, długość zobowiązania, warunki rezygnacji, automatyczne przedłużenia, zrozumiałość dokumentów',
+    categories: ['formalności i umowa'],
+  },
+  {
+    id: 'obsluga',
+    name: 'Obsługa',
+    icon: '🎧',
+    color: '#065f46',
+    bg: '#d1fae5',
+    desc: 'Jakość obsługi klienta, kontakt z opiekunem, reakcja na zgłoszenia, wsparcie po zakupie',
+    categories: ['jakość obsługi', 'brak kontaktu', 'opiekun/brak opiekuna', 'brak wsparcia/zainteresowania'],
+  },
+  {
+    id: 'ogolna',
+    name: 'Ogólna',
+    icon: '🌐',
+    color: '#374151',
+    bg: '#f3f4f6',
+    desc: 'Progres ucznia, forma nauki, elastyczność oferty, wygoda korzystania z usługi, lekcje',
+    categories: ['progres', 'forma nauki', 'elastyczność', 'wygoda', 'lekcje'],
+  },
+];
+
+const TIPS_DATA = [
+  { type:'alert', icon:'🚨', title:'Brak opiekuna = największy problem', text:'Kategoria "opiekun/brak opiekuna" i "brak kontaktu" dominują wśród krytyków (ocena 0–6). Klienci czują się pozostawieni sami sobie po zakupie. Priorytet: wdrożenie regularnych check-inów w pierwszych 90 dniach.', action:'Zobacz komentarze o opiekunie', view:'responses', tag:'opiekun/brak opiekuna' },
+  { type:'good',  icon:'🏆', title:'B2B: NPS +61 – wzorowy segment', text:'Klienci B2B są wyraźnie bardziej zadowoleni (+61 vs +38 B2C). Główne czynniki sukcesu: indywidualne podejście, finansowanie firmowe i dedykowany opiekun. Warto przenieść te praktyki do B2C.', action:'Szczegóły B2B', view:'responses', tag:null },
+  { type:'warn',  icon:'📈', title:'Pasywni (7–8): 26% do aktywacji', text:'Pasywni najczęściej wskazują na "dostępność" i "funkcje Platformy". Prosta interwencja — prezentacja nowych godzin + nowych funkcji — może zamienić ich w promotorów. Potencjał: +5–8pp NPS.', action:'Filtruj pasywnych', view:'responses', tag:null },
+  { type:'',      icon:'💬', title:'Sprzedaż tworzy niespełnione obietnice', text:'Kategorie "sprzedaż" i "niespełnione obietnice" często współwystępują. Klienci piszą, że handlowcy obiecywali opiekuna, konkretne terminy i funkcje, których potem nie było. Temat do omówienia z zespołem sprzedaży.', action:'Zobacz komentarze o sprzedaży', view:'responses', tag:'sprzedaż' },
+  { type:'good',  icon:'🎯', title:'In-app NPS wyższy o 13pp od Email', text:'Metoda In-app daje NPS +51 vs Email +38. Klienci ankietowani w momencie użycia platformy oceniają wyżej. Rozważ zwiększenie udziału ankiet In-app, szczególnie po ukończeniu lekcji.', action:'Przegląd metod', view:'overview', tag:null },
+  { type:'warn',  icon:'📚', title:'Progres i motywacja — obszar do wzmocnienia', text:'Kategorie "brak motywacji" i "progres" pojawiają się głównie u klientów w 3–6 miesiącu nauki. To moment krytyczny — warto wprowadzić automatyczny raport postępów wysyłany do klienta co miesiąc.', action:'Zobacz komentarze o progresie', view:'responses', tag:'progres' },
+];
+
+// ═══════════════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════════════
+let charts = {};
+let currentPage = 1;
+const PAGE_SIZE = 8;
+let activeTag = null;
+
+// ═══════════════════════════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════════════════════════
+function scoreColor(n) { return n>=50?'#16a34a': n>=30?'#4f46e5': n>=0?'#ca8a04':'#dc2626'; }
+function scoreClass(n) { return n>=50?'score-g': n>=30?'score-m': n>=0?'score-w':'score-b'; }
+function groupOf(s) { return s>=9?'promoter': s>=7?'passive':'detractor'; }
+function pillClass(s) { const g=groupOf(s); return g==='promoter'?'pill-p': g==='passive'?'pill-n':'pill-d'; }
+function tagChip(t) { const c=TAG_COLORS[t]||{bg:'#f3f4f6',color:'#555'}; return `<span class="tag-chip" style="background:${c.bg};color:${c.color}">${t}</span>`; }
+function subcatChip(s) { const c=SUBCAT_COLORS[s]||{bg:'#f3f4f6',color:'#555',border:'#ddd'}; return `<span class="subcat-chip" style="background:${c.bg};color:${c.color};border-color:${c.border}">${s}</span>`; }
+
+function getFilteredData() {
+  const period  = document.getElementById('fPeriod').value;
+  const segment = document.getElementById('fSegment').value;
+  const method  = document.getElementById('fMethod').value;
+  const pd = PERIODS[period] || PERIODS.all;
+
+  let segs = SEGMENTS_ALL;
+  if (segment !== 'all') segs = segs.filter(s => s.name === segment);
+
+  let meths = METHODS;
+  if (method !== 'all') meths = meths.filter(m => m.name === method);
+
+  let resps = RESPONSES;
+  if (segment !== 'all') resps = resps.filter(r => r.segment === segment);
+  if (method  !== 'all') resps = resps.filter(r => r.method  === method);
+
+  return { pd, segs, meths, resps };
+}
+
+// ═══════════════════════════════════════════════════════════════
+// CHARTS
+// ═══════════════════════════════════════════════════════════════
+function buildChart(id, cfg) {
+  if (charts[id]) { charts[id].destroy(); }
+  const el = document.getElementById(id);
+  if (!el) return;
+  charts[id] = new Chart(el, cfg);
+}
+
+function renderTrendChart(canvasId, pd) {
+  buildChart(canvasId, {
+    type:'line',
+    data: {
+      labels: pd.labels,
+      datasets: [
+        { label:'NPS', data:pd.nps, borderColor:'#4f46e5', backgroundColor:'rgba(79,70,229,.08)', borderWidth:2.5, pointRadius:4, pointBackgroundColor:'#4f46e5', tension:.35, fill:true, yAxisID:'y' },
+        { label:'Promotorzy %', data:pd.promoters, borderColor:'#16a34a', borderWidth:1.5, borderDash:[4,3], pointRadius:3, tension:.35, fill:false, yAxisID:'y2' },
+        { label:'Krytycy %',    data:pd.detractors,borderColor:'#ef4444', borderWidth:1.5, borderDash:[4,3], pointRadius:3, tension:.35, fill:false, yAxisID:'y2' },
+      ]
+    },
+    options: {
+      responsive:true, plugins:{legend:{display:false}},
+      scales:{
+        y:  {position:'left',  grid:{color:'#f3f4f6'}, ticks:{font:{size:11}}, title:{display:true,text:'NPS',font:{size:10}}},
+        y2: {position:'right', grid:{drawOnChartArea:false}, ticks:{font:{size:11},callback:v=>v+'%'}},
+        x:  {grid:{display:false}, ticks:{font:{size:11}}},
+      }
+    }
+  });
+}
+
+function renderTrendFull(pd) {
+  buildChart('trendChartFull', {
+    type:'line',
+    data:{
+      labels:pd.labels,
+      datasets:[
+        {label:'NPS', data:pd.nps, borderColor:'#4f46e5', backgroundColor:'rgba(79,70,229,.08)', borderWidth:2.5, pointRadius:4, tension:.35, fill:true, yAxisID:'y'},
+        {label:'Promotorzy', data:pd.promoters, borderColor:'#16a34a', borderWidth:1.5, pointRadius:3, tension:.35, fill:false, yAxisID:'y2'},
+        {label:'Pasywni',    data:pd.passives,  borderColor:'#ca8a04', borderWidth:1.5, pointRadius:3, tension:.35, fill:false, yAxisID:'y2'},
+        {label:'Krytycy',    data:pd.detractors,borderColor:'#ef4444', borderWidth:1.5, pointRadius:3, tension:.35, fill:false, yAxisID:'y2'},
+      ]
+    },
+    options:{
+      responsive:true, plugins:{legend:{display:false}},
+      scales:{
+        y:  {position:'left',  grid:{color:'#f3f4f6'}, ticks:{font:{size:11}}, title:{display:true,text:'NPS',font:{size:10}}},
+        y2: {position:'right', grid:{drawOnChartArea:false}, ticks:{font:{size:11},callback:v=>v+'%'}},
+        x:  {grid:{display:false}, ticks:{font:{size:11}}},
+      }
+    }
+  });
+}
+
+function renderDonut(pd) {
+  buildChart('donutChart', {
+    type:'doughnut',
+    data:{
+      labels:['Promotorzy','Pasywni','Krytycy'],
+      datasets:[{data:[pd.total.prom,pd.total.pass,pd.total.det],backgroundColor:['#16a34a','#f59e0b','#ef4444'],borderWidth:0,hoverOffset:6}]
+    },
+    options:{responsive:true,cutout:'68%',plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>` ${c.label}: ${c.parsed}%`}}}}
+  });
+}
+
+function renderVolume(pd) {
+  buildChart('volumeChart', {
+    type:'bar',
+    data:{
+      labels:pd.labels,
+      datasets:[{label:'Odpowiedzi',data:pd.responses,backgroundColor:'rgba(79,70,229,.15)',borderColor:'#4f46e5',borderWidth:1.5,borderRadius:6}]
+    },
+    options:{responsive:true,plugins:{legend:{display:false}},scales:{y:{grid:{color:'#f3f4f6'},ticks:{font:{size:11}}},x:{grid:{display:false},ticks:{font:{size:11}}}}}
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════
+// KPIs
+// ═══════════════════════════════════════════════════════════════
+function renderKPIs(pd) {
+  const t = pd.total;
+  document.getElementById('npsVal').textContent  = (t.nps>0?'+':'')+t.nps;
+  document.getElementById('promVal').textContent  = t.prom+'%';
+  document.getElementById('passVal').textContent  = t.pass+'%';
+  document.getElementById('detVal').textContent   = t.det+'%';
+  document.getElementById('barP').style.width = t.prom+'%';
+  document.getElementById('barN').style.width = t.pass+'%';
+  document.getElementById('barD').style.width = t.det+'%';
+}
+
+// ═══════════════════════════════════════════════════════════════
+// SEGMENTS
+// ═══════════════════════════════════════════════════════════════
+function renderSegments(segs) {
+  document.getElementById('segContainer').innerHTML = segs.map(s=>`
+    <div class="seg-row" onclick="openSegModal('${s.name}')">
+      <div class="seg-name">${s.name}</div>
+      <div class="seg-score ${scoreClass(s.nps)}">${s.nps>0?'+':''}${s.nps}</div>
+      <div class="seg-bar-bg"><div class="seg-bar-fill" style="width:${Math.max(4,s.nps)}%;background:${scoreColor(s.nps)}"></div></div>
+      <div class="badges"><span class="badge bp">P ${s.prom}%</span><span class="badge bn">N ${s.pass}%</span><span class="badge bd">D ${s.det}%</span></div>
+      <div class="seg-resp">${s.resp.toLocaleString()} odp.</div>
+      <span class="kpi-change up" style="margin:0;font-size:.68rem">▲ ${s.trend}</span>
+    </div>`).join('');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// METHODS
+// ═══════════════════════════════════════════════════════════════
+function renderMethods(meths) {
+  document.getElementById('methodContainer').innerHTML = meths.map(m=>`
+    <div class="method-card" onclick="openMethodModal('${m.name}')">
+      <div class="method-name">${m.icon} ${m.name}</div>
+      <div class="method-nps" style="color:${scoreColor(m.nps)}">${m.nps>0?'+':''}${m.nps}</div>
+      <div class="method-meta">${m.resp.toLocaleString()} odpowiedzi</div>
+      <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap">
+        <span class="badge bp">P ${m.prom}%</span>
+        <span class="badge bn">N ${m.pass}%</span>
+        <span class="badge bd">D ${m.det}%</span>
+      </div>
+    </div>`).join('');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// TREND INSIGHTS
+// ═══════════════════════════════════════════════════════════════
+function renderTrendInsights(pd) {
+  const nps = pd.nps;
+  const first = nps[0], last = nps[nps.length-1];
+  const diff = last - first;
+  const avg  = Math.round(nps.reduce((a,b)=>a+b,0)/nps.length);
+  const peak = Math.max(...nps);
+  const low  = Math.min(...nps);
+  document.getElementById('trendInsights').innerHTML = `
+    <div class="ti-card"><div class="ti-val" style="color:${diff>=0?'#16a34a':'#dc2626'}">${diff>=0?'+':''}${diff}</div><div class="ti-label">Zmiana NPS w okresie</div><div class="ti-detail">${first>0?'+':''}${first} → ${last>0?'+':''}${last}</div></div>
+    <div class="ti-card"><div class="ti-val" style="color:#4f46e5">${avg>0?'+':''}${avg}</div><div class="ti-label">Średni NPS (okres)</div><div class="ti-detail">Mediana wyników</div></div>
+    <div class="ti-card"><div class="ti-val" style="color:#ca8a04">${peak>0?'+':''}${peak} / ${low>0?'+':''}${low}</div><div class="ti-label">Szczyt / dołek</div><div class="ti-detail">Zakres wahań w okresie</div></div>
+  `;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// RESPONSES TABLE
+// ═══════════════════════════════════════════════════════════════
+function renderTagFilters(resps) {
+  const allTags = [...new Set(resps.flatMap(r=>r.tags))];
+  const container = document.getElementById('tagFilters');
+  container.innerHTML =
+    `<button class="tag-filter ${!activeTag?'active':''}" onclick="setTag(null)">Wszystkie</button>` +
+    allTags.map(t=>`<button class="tag-filter ${activeTag===t?'active':''}" onclick="setTag('${t}')">${t}</button>`).join('');
+}
+
+function setTag(t) { activeTag=t; currentPage=1; renderTable(); }
+
+function getFilteredResps() {
+  const { resps } = getFilteredData();
+  let r = resps;
+  const q = (document.getElementById('searchBox')||{}).value||'';
+  const sf = (document.getElementById('scoreFilter')||{}).value||'all';
+  if (q) r = r.filter(x=>x.text.toLowerCase().includes(q.toLowerCase())||x.segment.toLowerCase().includes(q.toLowerCase()));
+  if (sf!=='all') r = r.filter(x=>groupOf(x.score)===sf);
+
+  // Ekspansja: każdy feedback pojawia się RAZ na kategorię.
+  // Bez filtra → duplikujemy wiersze po kategoriach (jeden wiersz = jedna kategoria).
+  // Z filtrem → pokazujemy tylko wiersze pasujące do wybranej kategorii.
+  if (activeTag) {
+    r = r.filter(x=>x.tags.includes(activeTag))
+         .map(x=>({...x, _focusTag: activeTag}));
+  } else {
+    // Każdy feedback × jego tagi = osobny wiersz z wyróżnioną kategorią
+    r = r.flatMap(x => x.tags.map(tag => ({...x, _focusTag: tag, _rowKey: `${x.id}_${tag}`})));
+  }
+  return r;
+}
+
+function renderTable() {
+  const rows = getFilteredResps();
+  renderTagFilters(getFilteredData().resps);
+
+  const total = rows.length;
+  const pages = Math.max(1, Math.ceil(total/PAGE_SIZE));
+  if (currentPage > pages) currentPage = 1;
+
+  const slice = rows.slice((currentPage-1)*PAGE_SIZE, currentPage*PAGE_SIZE);
+
+  document.getElementById('responseTable').innerHTML = slice.map(r => {
+    const focusCol = TAG_COLORS[r._focusTag] || {bg:'#f3f4f6', color:'#555'};
+    const otherTags = r.tags.filter(t => t !== r._focusTag);
+    // podkategorie powiązane z wyróżnioną kategorią (heurystyka: wszystkie jeśli jeden tag, podzbiór jeśli wiele)
+    const focusSubcats = r.subcats;
+    return `<tr onclick="openResponseModal(${r.id})">
+      <td><span class="score-pill ${pillClass(r.score)}">${r.score}</span></td>
+      <td><div class="response-text">${r.text}</div></td>
+      <td style="white-space:nowrap;color:var(--text-2);font-size:.78rem">${r.segment}</td>
+      <td style="white-space:nowrap;color:var(--text-2);font-size:.78rem">${r.method}</td>
+      <td>
+        <span class="tag-chip" style="background:${focusCol.bg};color:${focusCol.color};font-weight:800;outline:2px solid ${focusCol.color}22">${r._focusTag}</span>
+        ${otherTags.length ? `<br><span style="font-size:.63rem;color:var(--text-3);margin-top:3px;display:inline-block">+ ${otherTags.map(t=>`<span style="opacity:.7">${t}</span>`).join(', ')}</span>` : ''}
+      </td>
+      <td>${focusSubcats.map(subcatChip).join('')}</td>
+      <td style="white-space:nowrap;color:var(--text-3);font-size:.7rem">${r.date}</td>
+    </tr>`;
+  }).join('') || `<tr><td colspan="7" style="text-align:center;padding:30px;color:var(--text-3)">Brak wyników pasujących do filtrów</td></tr>`;
+
+  const shown = total === 0 ? 0 : (currentPage-1)*PAGE_SIZE+1;
+  document.getElementById('pageInfo').textContent = `${shown}–${Math.min(total,currentPage*PAGE_SIZE)} z ${total} wierszy (${getFilteredData().resps.length} unikalnych odpowiedzi)`;
+
+  const pb = document.getElementById('pageBtns');
+  pb.innerHTML = Array.from({length:pages},(_,i)=>`<button class="page-btn ${i+1===currentPage?'active':''}" onclick="goPage(${i+1})">${i+1}</button>`).join('');
+}
+
+function goPage(p) { currentPage=p; renderTable(); }
+
+// ═══════════════════════════════════════════════════════════════
+// TIPS
+// ═══════════════════════════════════════════════════════════════
+function renderTips() {
+  document.getElementById('tipsContainer').innerHTML = TIPS_DATA.map(t=>`
+    <div class="tip-card ${t.type}">
+      <div class="tip-icon">${t.icon}</div>
+      <div>
+        <div class="tip-title">${t.title}</div>
+        <div class="tip-text">${t.text}</div>
+        <span class="tip-action" onclick="tipAction('${t.view}','${t.tag||''}')">${t.action} →</span>
+      </div>
+    </div>`).join('');
+}
+
+function tipAction(view, tag) {
+  if (tag) { activeTag=tag; currentPage=1; }
+  switchView(view);
+  if (view==='responses') renderTable();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// MODALS
+// ═══════════════════════════════════════════════════════════════
+function openModal(html) {
+  document.getElementById('modalContent').innerHTML = html;
+  document.getElementById('modalOverlay').classList.add('open');
+}
+function closeModal(e) { if(e.target===document.getElementById('modalOverlay')) document.getElementById('modalOverlay').classList.remove('open'); }
+document.addEventListener('keydown', e=>{ if(e.key==='Escape') document.getElementById('modalOverlay').classList.remove('open'); });
+
+function openResponseModal(id) {
+  const r = RESPONSES.find(x=>x.id===id);
+  if (!r) return;
+  const g = groupOf(r.score);
+  const gLabel = g==='promoter'?'Promotor':g==='passive'?'Pasywny':'Krytyk';
+  const gColor = g==='promoter'?'#15803d':g==='passive'?'#854d0e':'#dc2626';
+  openModal(`
+    <div class="modal-header">
+      <div>
+        <div class="modal-title">Szczegóły odpowiedzi</div>
+        <div style="color:#888;font-size:.78rem;margin-top:4px">${r.date} · ${r.segment} · ${r.method}</div>
+      </div>
+      <button class="modal-close" onclick="document.getElementById('modalOverlay').classList.remove('open')">✕</button>
+    </div>
+    <div class="modal-section">
+      <div class="modal-row">
+        <span class="score-pill ${pillClass(r.score)}" style="width:auto;padding:0 14px;border-radius:20px">Ocena: ${r.score}/10</span>
+        <span style="padding:5px 12px;border-radius:20px;background:${g==='promoter'?'#dcfce7':g==='passive'?'#fef9c3':'#fee2e2'};color:${gColor};font-size:.78rem;font-weight:700">${gLabel}</span>
+      </div>
+    </div>
+    <div class="modal-section">
+      <div class="modal-section-title">Treść odpowiedzi</div>
+      <div class="modal-text">"${r.text}"</div>
+    </div>
+    <div class="modal-section">
+      <div class="modal-section-title">Kategorie</div>
+      <div>${r.tags.map(tagChip).join(' ')}</div>
+    </div>
+    <div class="modal-section">
+      <div class="modal-section-title">Podkategorie</div>
+      <div>${r.subcats.map(subcatChip).join(' ')}</div>
+    </div>
+  `);
+}
+
+function openSegModal(name) {
+  const s = SEGMENTS_ALL.find(x=>x.name===name);
+  const resps = RESPONSES.filter(r=>r.segment===name);
+  openModal(`
+    <div class="modal-header">
+      <div class="modal-title">Segment: ${name}</div>
+      <button class="modal-close" onclick="document.getElementById('modalOverlay').classList.remove('open')">✕</button>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:20px">
+      <div style="text-align:center"><div style="font-size:1.8rem;font-weight:900;color:${scoreColor(s.nps)}">${s.nps>0?'+':''}${s.nps}</div><div style="font-size:.72rem;color:#888">NPS Score</div></div>
+      <div style="text-align:center"><div style="font-size:1.8rem;font-weight:900;color:#16a34a">${s.prom}%</div><div style="font-size:.72rem;color:#888">Promotorzy</div></div>
+      <div style="text-align:center"><div style="font-size:1.8rem;font-weight:900;color:#dc2626">${s.det}%</div><div style="font-size:.72rem;color:#888">Krytycy</div></div>
+    </div>
+    <div class="modal-section-title">Ostatnie odpowiedzi z segmentu</div>
+    ${resps.slice(0,3).map(r=>`
+      <div style="background:#f8f9fb;border-radius:10px;padding:12px;margin-bottom:8px;cursor:pointer" onclick="openResponseModal(${r.id})">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+          <span class="score-pill ${pillClass(r.score)}" style="width:auto;padding:0 10px;border-radius:16px;font-size:.75rem">${r.score}/10</span>
+          <span style="font-size:.7rem;color:#888">${r.date}</span>
+        </div>
+        <div style="font-size:.82rem;color:#374151">${r.text}</div>
+        <div style="margin-top:6px">${r.tags.map(tagChip).join('')}</div>
+      </div>`).join('')}
+    ${resps.length>3?`<div style="text-align:center;margin-top:10px"><span class="tip-action" onclick="document.getElementById('modalOverlay').classList.remove('open');document.getElementById('fSegment').value='${name}';switchView('responses');renderTable()">Zobacz wszystkie odpowiedzi →</span></div>`:''}
+  `);
+}
+
+function openMethodModal(name) {
+  const m = METHODS.find(x=>x.name===name);
+  openModal(`
+    <div class="modal-header">
+      <div class="modal-title">Metoda: ${m.icon} ${m.name}</div>
+      <button class="modal-close" onclick="document.getElementById('modalOverlay').classList.remove('open')">✕</button>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:20px">
+      <div style="text-align:center"><div style="font-size:1.8rem;font-weight:900;color:${scoreColor(m.nps)}">${m.nps>0?'+':''}${m.nps}</div><div style="font-size:.72rem;color:#888">NPS Score</div></div>
+      <div style="text-align:center"><div style="font-size:1.8rem;font-weight:900;color:#16a34a">${m.prom}%</div><div style="font-size:.72rem;color:#888">Promotorzy</div></div>
+      <div style="text-align:center"><div style="font-size:1.8rem;font-weight:900">${m.resp.toLocaleString()}</div><div style="font-size:.72rem;color:#888">Odpowiedzi</div></div>
+    </div>
+    <div class="modal-text">Metoda <strong>${m.name}</strong> generuje ${m.resp.toLocaleString()} odpowiedzi z NPS ${m.nps>0?'+':''}${m.nps}. Promotorzy stanowią ${m.prom}% respondentów, pasywni ${m.pass}%, krytycy ${m.det}%.</div>
+  `);
+}
+
+function openGroupModal(group) {
+  const labels = { promoters:'Promotorzy (9-10)', passives:'Pasywni (7-8)', detractors:'Krytycy (0-6)' };
+  const scores  = { promoters:[9,10], passives:[7,8], detractors:[0,1,2,3,4,5,6] };
+  const resps = RESPONSES.filter(r=>scores[group].includes(r.score));
+  openModal(`
+    <div class="modal-header">
+      <div class="modal-title">${labels[group]}</div>
+      <button class="modal-close" onclick="document.getElementById('modalOverlay').classList.remove('open')">✕</button>
+    </div>
+    <div class="modal-section-title">Przykładowe odpowiedzi</div>
+    ${resps.slice(0,5).map(r=>`
+      <div style="background:#f8f9fb;border-radius:10px;padding:12px;margin-bottom:8px;cursor:pointer" onclick="openResponseModal(${r.id})">
+        <div style="display:flex;justify-content:space-between;margin-bottom:5px">
+          <span style="font-size:.75rem;font-weight:700;color:#555">${r.segment} · ${r.method}</span>
+          <span style="font-size:.7rem;color:#888">${r.date}</span>
+        </div>
+        <div style="font-size:.82rem;color:#374151">${r.text}</div>
+        <div style="margin-top:6px">${r.tags.map(tagChip).join('')}${r.subcats.map(subcatChip).join('')}</div>
+      </div>`).join('')}
+    ${resps.length===0?'<div style="text-align:center;padding:20px;color:#888">Brak odpowiedzi w tym filtrze</div>':''}
+  `);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// TEAMS VIEW
+// ═══════════════════════════════════════════════════════════════
+let activeTeam = null;
+let activeTeamCat = null;
+
+function renderTeamsView() {
+  const { resps } = getFilteredData();
+  const layout = document.getElementById('teamsLayout');
+  if (!layout) return;
+
+  // Team selector tabs
+  const teamTabs = TEAMS.map(t => {
+    const teamResps = resps.filter(r => r.tags.some(tag => t.categories.includes(tag)));
+    const isActive = activeTeam === t.id;
+    return `<div class="team-tab ${isActive ? 'active' : ''}"
+      style="${isActive ? `background:${t.color};border-color:${t.color}` : ''}"
+      onclick="selectTeam('${t.id}')">
+      <span class="team-tab-icon">${t.icon}</span>
+      <span class="team-tab-name">${t.name}</span>
+      <span class="team-tab-count">${teamResps.length} opinii</span>
+    </div>`;
+  }).join('');
+
+  // Coming soon placeholder for unassigned teams
+  const comingSoon = `<div class="team-tab" style="border-style:dashed;cursor:default;opacity:.5">
+    <span class="team-tab-icon">➕</span>
+    <span class="team-tab-name" style="color:#888">Kolejny zespół</span>
+  </div>`;
+
+  if (!activeTeam) {
+    // Overview: show all teams as cards
+    const teamCards = TEAMS.map(t => {
+      const teamResps = resps.filter(r => r.tags.some(tag => t.categories.includes(tag)));
+      const proms = teamResps.filter(r => r.score >= 9).length;
+      const dets  = teamResps.filter(r => r.score <= 6).length;
+      const nps   = teamResps.length ? Math.round(((proms - dets) / teamResps.length) * 100) : null;
+      const npsStr = nps !== null ? (nps > 0 ? '+' : '') + nps : '–';
+      return `<div class="card" style="cursor:pointer;border-left:4px solid ${t.color}" onclick="selectTeam('${t.id}')">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+          <span style="font-size:1.6rem">${t.icon}</span>
+          <div>
+            <div class="card-title" style="color:${t.color}">${t.name}</div>
+            <div class="card-sub" style="margin-bottom:0">${t.desc}</div>
+          </div>
+          <div style="margin-left:auto;text-align:right">
+            <div style="font-size:1.6rem;font-weight:900;color:${scoreColor(nps||0)}">${npsStr}</div>
+            <div style="font-size:.7rem;color:#888">NPS</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:14px;font-size:.78rem;color:#555;margin-bottom:12px">
+          <span>💬 ${teamResps.length} opinii</span>
+          <span style="color:#16a34a">▲ ${proms} promotorów</span>
+          <span style="color:#dc2626">▼ ${dets} krytyków</span>
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          ${t.categories.map(c => { const col=TAG_COLORS[c]||{bg:'#f3f4f6',color:'#555'}; return `<span class="tag-chip" style="background:${col.bg};color:${col.color}">${c}</span>`; }).join('')}
+        </div>
+        <div style="margin-top:12px;font-size:.72rem;color:#9ca3af">Kliknij aby zobaczyć feedbacki →</div>
+      </div>`;
+    }).join('');
+
+    layout.innerHTML = `
+      <div class="teams-selector">${teamTabs}${comingSoon}</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px">${teamCards}</div>`;
+    return;
+  }
+
+  const team = TEAMS.find(t => t.id === activeTeam);
+  if (!team) return;
+
+  const teamResps = resps.filter(r => r.tags.some(tag => team.categories.includes(tag)));
+  const proms = teamResps.filter(r => r.score >= 9).length;
+  const dets  = teamResps.filter(r => r.score <= 6).length;
+  const pass  = teamResps.length - proms - dets;
+  const nps   = teamResps.length ? Math.round(((proms - dets) / teamResps.length) * 100) : null;
+  const npsStr = nps !== null ? (nps > 0 ? '+' : '') + nps : '–';
+
+  // Category filter pills for this team
+  const catPills = team.categories.map(c => {
+    const col = TAG_COLORS[c] || { bg:'#f3f4f6', color:'#555' };
+    const cnt = teamResps.filter(r => r.tags.includes(c)).length;
+    const isActive = activeTeamCat === c;
+    return `<span class="team-cat-pill ${(!activeTeamCat || isActive) ? '' : 'inactive'}"
+      style="background:${col.bg};color:${col.color};border-color:${isActive ? col.color : 'transparent'}"
+      onclick="selectTeamCat('${c.replace(/'/g,"\\'")}')">${c} <span style="opacity:.7">${cnt}</span></span>`;
+  }).join('');
+
+  // Filtered responses
+  let filtered = activeTeamCat
+    ? teamResps.filter(r => r.tags.includes(activeTeamCat))
+    : teamResps;
+
+  const cards = filtered.map(r => {
+    const g = groupOf(r.score);
+    const bc = g==='promoter'?'border-p':g==='passive'?'border-n':'border-d';
+    const teamTags = r.tags.filter(t => team.categories.includes(t));
+    return `<div class="cat-feedback-card ${bc}" onclick="openResponseModal(${r.id})">
+      <div class="cat-feedback-top">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          <span class="score-pill ${pillClass(r.score)}" style="width:auto;padding:0 10px;border-radius:16px">${r.score}/10</span>
+          <span style="font-size:.75rem;font-weight:600;color:#555">${r.segment}</span>
+          <span style="font-size:.72rem;color:#9ca3af">${r.method}</span>
+        </div>
+        <span class="cat-feedback-meta">${r.date}</span>
+      </div>
+      <div class="cat-feedback-text">"${r.text}"</div>
+      <div class="cat-feedback-chips">
+        ${teamTags.map(tagChip).join('')}
+        ${r.subcats.map(subcatChip).join('')}
+      </div>
+    </div>`;
+  }).join('') || `<div class="team-feed-empty">Brak opinii pasujących do wybranych filtrów.</div>`;
+
+  layout.innerHTML = `
+    <div class="teams-selector">${teamTabs}${comingSoon}</div>
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap">
+      <span style="font-size:1.5rem">${team.icon}</span>
+      <div>
+        <div style="font-size:1.05rem;font-weight:800;color:${team.color}">${team.name}</div>
+        <div style="font-size:.75rem;color:#888">${team.desc}</div>
+      </div>
+      <button onclick="selectTeam(null)" style="margin-left:auto;padding:6px 14px;border:1px solid #ddd;border-radius:8px;background:#fff;cursor:pointer;font-size:.78rem;color:#555">← Wszystkie zespoły</button>
+    </div>
+    <div class="team-panel-grid" style="grid-template-columns:repeat(4,1fr)">
+      <div class="team-kpi"><div class="team-kpi-val" style="color:${scoreColor(nps||0)}">${npsStr}</div><div class="team-kpi-lbl">NPS Zespołu</div></div>
+      <div class="team-kpi"><div class="team-kpi-val" style="color:#16a34a">${proms}</div><div class="team-kpi-lbl">Promotorzy</div></div>
+      <div class="team-kpi"><div class="team-kpi-val" style="color:#ca8a04">${pass}</div><div class="team-kpi-lbl">Pasywni</div></div>
+      <div class="team-kpi"><div class="team-kpi-val" style="color:#dc2626">${dets}</div><div class="team-kpi-lbl">Krytycy</div></div>
+    </div>
+    <div class="card" style="margin-bottom:16px">
+      <div class="card-title" style="margin-bottom:10px">Filtruj po kategorii</div>
+      <div class="team-cat-pills">${catPills}
+        ${activeTeamCat ? `<span class="team-cat-pill" style="background:#f3f4f6;color:#555;border-color:transparent" onclick="selectTeamCat(null)">✕ Pokaż wszystkie</span>` : ''}
+      </div>
+    </div>
+    <div class="cat-feedback-list">${cards}</div>`;
+}
+
+function selectTeam(id) {
+  activeTeam = id || null;
+  activeTeamCat = null;
+  renderTeamsView();
+}
+
+function selectTeamCat(cat) {
+  activeTeamCat = (activeTeamCat === cat) ? null : cat;
+  renderTeamsView();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// CATEGORIES VIEW
+// ═══════════════════════════════════════════════════════════════
+let activeCat = null;
+
+function getCatStats() {
+  const { resps } = getFilteredData();
+  const allTags = Object.keys(TAG_COLORS);
+  return allTags.map(tag => {
+    const tagged = resps.filter(r => r.tags.includes(tag));
+    const proms  = tagged.filter(r => r.score >= 9).length;
+    const dets   = tagged.filter(r => r.score <= 6).length;
+    const nps    = tagged.length ? Math.round(((proms - dets) / tagged.length) * 100) : null;
+    const subcatMap = {};
+    tagged.forEach(r => r.subcats.forEach(s => { subcatMap[s] = (subcatMap[s]||0) + 1; }));
+    return { tag, count: tagged.length, nps, proms, dets, passives: tagged.length - proms - dets, subcats: subcatMap, responses: tagged };
+  }).filter(c => c.count > 0).sort((a,b) => b.count - a.count);
+}
+
+function renderCatSidebar(stats) {
+  const items = stats.map(c => {
+    const col = TAG_COLORS[c.tag] || { bg:'#f3f4f6', color:'#555' };
+    const npsStr = c.nps !== null ? (c.nps > 0 ? '+' : '') + c.nps : '–';
+    const npsCol = c.nps === null ? '#888' : scoreColor(c.nps);
+    return `<div class="cat-list-item ${activeCat===c.tag?'active':''}" onclick="selectCat('${c.tag.replace(/'/g,"\\'")}')">
+      <div class="cat-list-name">${c.tag}</div>
+      <span class="cat-list-count" style="background:${col.bg};color:${col.color}">${c.count}</span>
+      <span class="cat-list-nps" style="color:${npsCol}">${npsStr}</span>
+    </div>`;
+  }).join('');
+
+  return `<div class="cat-sidebar">
+    <div class="cat-sidebar-header">Kategorie · ${stats.length} aktywnych</div>
+    ${items}
+  </div>`;
+}
+
+function renderCatPanel(stats) {
+  if (!activeCat) {
+    // Overview grid of all categories
+    const grid = stats.map(c => {
+      const col = TAG_COLORS[c.tag] || { bg:'#f3f4f6', color:'#555' };
+      const npsStr = c.nps !== null ? (c.nps > 0 ? '+' : '') + c.nps : '–';
+      const npsCol = c.nps === null ? '#888' : scoreColor(c.nps);
+      const pct = c.count > 0 ? Math.round((c.proms / c.count) * 100) : 0;
+      return `<div class="cat-feedback-card border-${c.dets > c.proms ? 'd' : c.proms > c.dets ? 'p' : 'n'}"
+        onclick="selectCat('${c.tag.replace(/'/g,"\\'")}')">
+        <div class="cat-feedback-top">
+          <span class="tag-chip" style="background:${col.bg};color:${col.color};font-size:.8rem">${c.tag}</span>
+          <span style="font-size:1.2rem;font-weight:900;color:${npsCol}">${npsStr}</span>
+        </div>
+        <div style="display:flex;gap:12px;font-size:.75rem;color:#555;margin-bottom:8px">
+          <span>💬 ${c.count} odpowiedzi</span>
+          <span style="color:#16a34a">▲ ${c.proms} P</span>
+          <span style="color:#dc2626">▼ ${c.dets} D</span>
+        </div>
+        <div class="bar-mini" style="height:7px"><div class="bar-fill" style="width:${pct}%;background:${npsCol}"></div></div>
+        <div style="margin-top:8px;font-size:.7rem;color:#9ca3af">Kliknij aby zobaczyć wszystkie komentarze →</div>
+      </div>`;
+    }).join('');
+    return `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px">${grid}</div>`;
+  }
+
+  const c = stats.find(x => x.tag === activeCat);
+  if (!c) return '<div class="cat-empty">Brak danych dla tej kategorii.</div>';
+
+  const col = TAG_COLORS[c.tag] || { bg:'#f3f4f6', color:'#555' };
+  const npsStr = c.nps !== null ? (c.nps > 0 ? '+' : '') + c.nps : '–';
+  const npsCol = c.nps === null ? '#888' : scoreColor(c.nps);
+
+  const subcatHtml = Object.entries(c.subcats).map(([s, cnt]) => `${subcatChip(s)} <span style="font-size:.68rem;color:#9ca3af">${cnt}×</span>`).join(' ');
+
+  const cards = c.responses.map(r => {
+    const g = groupOf(r.score);
+    const bc = g==='promoter'?'border-p':g==='passive'?'border-n':'border-d';
+    return `<div class="cat-feedback-card ${bc}" onclick="openResponseModal(${r.id})">
+      <div class="cat-feedback-top">
+        <div style="display:flex;align-items:center;gap:8px">
+          <span class="score-pill ${pillClass(r.score)}" style="width:auto;padding:0 10px;border-radius:16px">${r.score}/10</span>
+          <span style="font-size:.75rem;font-weight:600;color:#555">${r.segment}</span>
+          <span style="font-size:.72rem;color:#9ca3af">${r.method}</span>
+        </div>
+        <span class="cat-feedback-meta">${r.date}</span>
+      </div>
+      <div class="cat-feedback-text">"${r.text}"</div>
+      <div class="cat-feedback-chips">
+        ${r.subcats.map(subcatChip).join('')}
+        ${r.tags.length > 1 ? `<span style="font-size:.63rem;color:var(--text-3);margin-left:4px">· pojawia się też w: ${r.tags.filter(t=>t!==activeCat).map(t=>`<span style="color:${TAG_COLORS[t]?.color||'#555'}">${t}</span>`).join(', ')}</span>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+
+  return `<div class="cat-panel">
+    <div class="cat-panel-header">
+      <div>
+        <span class="tag-chip" style="background:${col.bg};color:${col.color};font-size:.85rem;margin-bottom:6px;display:inline-block">${c.tag}</span>
+        <div class="cat-panel-title">${c.count} odpowiedzi w tej kategorii</div>
+      </div>
+      <div class="cat-stat-box"><div class="cat-stat-val" style="color:${npsCol}">${npsStr}</div><div class="cat-stat-lbl">NPS</div></div>
+      <div class="cat-stat-box"><div class="cat-stat-val" style="color:#16a34a">${c.proms}</div><div class="cat-stat-lbl">Promotorzy</div></div>
+      <div class="cat-stat-box"><div class="cat-stat-val" style="color:#ca8a04">${c.passives}</div><div class="cat-stat-lbl">Pasywni</div></div>
+      <div class="cat-stat-box"><div class="cat-stat-val" style="color:#dc2626">${c.dets}</div><div class="cat-stat-lbl">Krytycy</div></div>
+      <button onclick="selectCat(null)" style="margin-left:auto;padding:6px 14px;border:1px solid #ddd;border-radius:8px;background:#fff;cursor:pointer;font-size:.78rem;color:#555">← Wszystkie</button>
+    </div>
+    ${Object.keys(c.subcats).length ? `<div class="cat-subcats">
+      <div class="cat-subcats-title">Podkategorie w tej grupie</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center">${subcatHtml}</div>
+    </div>` : ''}
+    <div class="cat-feedback-list">${cards || '<div class="cat-empty">Brak odpowiedzi w tej kategorii.</div>'}</div>
+  </div>`;
+}
+
+function selectCat(tag) {
+  activeCat = tag || null;
+  renderCategoriesView();
+}
+
+function renderCategoriesView() {
+  const stats = getCatStats();
+  const layout = document.getElementById('catLayout');
+  if (!layout) return;
+  layout.innerHTML = `
+    ${renderCatSidebar(stats)}
+    <div id="catPanelWrapper">${renderCatPanel(stats)}</div>
+  `;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// VIEW SWITCHING
+// ═══════════════════════════════════════════════════════════════
+function switchView(name) {
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('view-'+name).classList.add('active');
+  const tabs = {overview:0,trend:1,categories:2,teams:3,responses:4,tips:5};
+  document.querySelectorAll('.nav-tab')[tabs[name]].classList.add('active');
+  if (name==='responses') { currentPage=1; renderTable(); }
+  if (name==='trend') { const {pd}=getFilteredData(); renderTrendFull(pd); renderVolume(pd); renderTrendInsights(pd); }
+  if (name==='tips') renderTips();
+  if (name==='categories') { activeCat=null; renderCategoriesView(); }
+  if (name==='teams') { activeTeam=null; activeTeamCat=null; renderTeamsView(); }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// MAIN REFRESH
+// ═══════════════════════════════════════════════════════════════
+function refresh() {
+  const {pd, segs, meths} = getFilteredData();
+  renderKPIs(pd);
+  renderTrendChart('trendChartOv', pd);
+  renderDonut(pd);
+  renderSegments(segs);
+  renderMethods(meths);
+
+  // also update active view if not overview
+  const active = document.querySelector('.view.active');
+  if (active && active.id === 'view-trend') { renderTrendFull(pd); renderVolume(pd); renderTrendInsights(pd); }
+  if (active && active.id === 'view-responses') renderTable();
+}
+
+// INIT
+refresh();
+renderTable();
+</script>
+</body>
+</html>
